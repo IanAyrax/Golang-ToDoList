@@ -7,6 +7,7 @@ import (
 	"time"
 	"example.com/GolangAPI2/model"
 	"example.com/GolangAPI2/helper"
+	"fmt"
 )
 
 type ToDoRepositoryImpl struct {
@@ -29,7 +30,7 @@ func (repository *ToDoRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, todo
 }
 
 func (repository *ToDoRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, todo model.ToDo) model.ToDo {
-	SQL := "update tb_todo set user_id = ?, title = ?, updated_at = ? where id = ?"
+	SQL := "update tb_todo set user_id = ?, title = ?, updated_at = ? where id_todo = ?"
 	_, err := tx.ExecContext(ctx, SQL, todo.UserId, todo.Title, time.Now(), todo.Id)
 	helper.PanicIfError(err)
 
@@ -37,13 +38,13 @@ func (repository *ToDoRepositoryImpl) Update(ctx context.Context, tx *sql.Tx, to
 }
 
 func (repository *ToDoRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, todo model.ToDo) {
-	SQL := "delete from tb_todo where id = ?"
+	SQL := "delete from tb_todo where id_todo = ?"
 	_, err := tx.ExecContext(ctx, SQL, todo.Id)	
 	helper.PanicIfError(err)
 }
 
 func (repository *ToDoRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, todoId int) (model.ToDo, error) {
-	SQL := "select id, user_id, title from tb_todo where id = ?"
+	SQL := "select id_todo, user_id, title from tb_todo where id = ?"
 	rows, err := tx.QueryContext(ctx, SQL, todoId)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -59,7 +60,8 @@ func (repository *ToDoRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, 
 }
 
 func (repository *ToDoRepositoryImpl) GetAll(ctx context.Context, tx *sql.Tx) []model.ToDo {
-	SQL := "select id, user_id, title from tb_todo"
+	fmt.Println("GetAll Repository OK")
+	SQL := "select id_todo, user_id, title from tb_todo"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()

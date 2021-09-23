@@ -8,6 +8,7 @@ import(
 	"example.com/GolangAPI2/repository"
 	"example.com/GolangAPI2/helper"
 	"example.com/GolangAPI2/exception"
+	"fmt"
 )
 
 type ToDoServiceImpl struct {
@@ -89,6 +90,7 @@ func (service *ToDoServiceImpl) FindById(ctx context.Context, todoId int) model.
 }
 
 func (service *ToDoServiceImpl) GetAll(ctx context.Context) []model.ToDoResponse {
+	fmt.Println("Service OK")
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)

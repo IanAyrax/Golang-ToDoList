@@ -7,6 +7,7 @@ import (
 	"example.com/GolangAPI2/helper"
 	"net/http"
 	"strconv"
+	"fmt"
 )
 
 type ToDoControllerImpl struct {
@@ -83,6 +84,7 @@ func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, reque
 }
 
 func (controller *ToDoControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	fmt.Println("GetAll Controller OK")
 	toDoResponses := controller.ToDoService.GetAll(request.Context())
 	webResponse := model.WebResponse{
 		Code:	200,
