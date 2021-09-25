@@ -18,6 +18,7 @@ func NewToDoRepository() ToDoRepository {
 }
 
 func (repository *ToDoRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, todo model.ToDo) model.ToDo {
+	fmt.Println("ToDoRepository Ok!")
 	SQL := "insert into tb_todo(user_id, title, created_at, updated_at) values(?, ?, ?, ?)"
 	result, err := tx.ExecContext(ctx, SQL, todo.UserId, todo.Title, time.Now(), time.Now())
 	helper.PanicIfError(err)

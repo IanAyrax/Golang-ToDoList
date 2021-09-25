@@ -26,6 +26,8 @@ func NewToDoService(todoRepository repository.ToDoRepository, DB *sql.DB, valida
 }
 
 func (service *ToDoServiceImpl) Create(ctx context.Context, request model.ToDoCreateRequest) model.ToDoResponse {
+	fmt.Println("ToDoService Ok!")
+	fmt.Println(request.UserId)
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 

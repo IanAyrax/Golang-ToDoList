@@ -21,16 +21,22 @@ func NewToDoController(todoService service.ToDoService) ToDoController {
 }
 
 func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	fmt.Println("ToDoController Ok!")
 	toDoCreateRequest := model.ToDoCreateRequest{}
 	helper.ReadFromRequestBody(request, &toDoCreateRequest)
+	
+	err := helper.VerifyToken(request)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
 
+	fmt.Println(toDoCreateRequest.Title)
 	toDoResponse := controller.ToDoService.Create(request.Context(), toDoCreateRequest)
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
 		Data:	toDoResponse,
 	}
-
 	helper.WriteToResponseBody(writer, webResponse)
 }
 

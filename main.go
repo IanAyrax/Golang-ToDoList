@@ -26,6 +26,7 @@ func main(){
 
 	mainRouter = router.NewToDoRouter(mainRouter, db, validate)
 	mainRouter = router.NewUserRouter(mainRouter, db, validate)
+	mainRouter = router.NewAuthRouter(mainRouter, db, validate)
 
 	server := http.Server{
 		Addr:		app.GoDotEnvVariable("APP_HOST_DEV") + ":" + app.GoDotEnvVariable("APP_PORT"),
