@@ -23,7 +23,6 @@ func (controller *AuthControllerImpl) Login(writer http.ResponseWriter, request 
 	fmt.Println("Auth Controller OK!")
 	authLoginRequest := model.AuthLoginRequest{}
 	helper.ReadFromRequestBody(request, &authLoginRequest)
-	fmt.Println(authLoginRequest.Email)
 
 	loginResponse := controller.AuthService.Login(request.Context(), authLoginRequest)
 	webResponse := model.WebResponse{

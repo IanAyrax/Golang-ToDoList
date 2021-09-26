@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"fmt"
+	"errors"
 )
 
 type ToDoControllerImpl struct {
@@ -25,18 +26,12 @@ func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request
 	toDoCreateRequest := model.ToDoCreateRequest{}
 	helper.ReadFromRequestBody(request, &toDoCreateRequest)
 	
-	roleId, err := helper.VerifyToken(request)
+	_, roleId, err := helper.VerifyToken(request)
 	request.Header.Set("RoleId", roleId)
 	if err != nil {
 		helper.PanicIfError(err)
 	}
-
-	err = helper.IsAdmin(request)
-	if err != nil {
-		fmt.Println(err)
-		helper.PanicIfError(err)
-	}
-
+	
 	toDoResponse := controller.ToDoService.Create(request.Context(), toDoCreateRequest)
 	webResponse := model.WebResponse{
 		Code:	200,
@@ -49,14 +44,30 @@ func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request
 func (controller *ToDoControllerImpl) Update(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	toDoUpdateRequest := model.ToDoUpdateRequest{}
 	helper.ReadFromRequestBody(request, &toDoUpdateRequest)
+	userId, roleId, err := helper.VerifyToken(request)
+	request.Header.Set("RoleId", roleId)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
 
+	err = helper.IsAdmin(request)
+	if err != nil {
+		fmt.Println(err)
+		helper.PanicIfError(err)
+	}
+	
 	todoId := params.ByName("todoId")
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
-
+	
+	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
+	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+	
 	toDoUpdateRequest.Id = id
 
-	toDoResponse := controller.ToDoService.Update(request.Context(), toDoUpdateRequest)
+	toDoResponse = controller.ToDoService.Update(request.Context(), toDoUpdateRequest)
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
@@ -67,9 +78,20 @@ func (controller *ToDoControllerImpl) Update(writer http.ResponseWriter, request
 }
 
 func (controller *ToDoControllerImpl) Delete(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	userId, roleId, err := helper.VerifyToken(request)
+	request.Header.Set("RoleId", roleId)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
+
 	todoId := params.ByName("todoId")
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
+
+	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
+	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
 
 	controller.ToDoService.Delete(request.Context(), id)
 	webResponse := model.WebResponse{
@@ -81,11 +103,21 @@ func (controller *ToDoControllerImpl) Delete(writer http.ResponseWriter, request
 }
 
 func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	userId, roleId, err := helper.VerifyToken(request)
+	request.Header.Set("RoleId", roleId)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
+
 	todoId := params.ByName("todoId")
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
 
 	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
+	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
@@ -97,6 +129,18 @@ func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, reque
 
 func (controller *ToDoControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	fmt.Println("GetAll Controller OK")
+	_, roleId, err := helper.VerifyToken(request)
+	request.Header.Set("RoleId", roleId)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
+
+	err = helper.IsAdmin(request)
+	if err != nil {
+		fmt.Println(err)
+		helper.PanicIfError(err)
+	}
+	
 	toDoResponses := controller.ToDoService.GetAll(request.Context())
 	webResponse := model.WebResponse{
 		Code:	200,

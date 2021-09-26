@@ -18,8 +18,8 @@ func NewUserRepository() UserRepository {
 }
 
 func (repository *UserRepositoryImpl) Save(ctx context.Context, tx *sql.Tx, user model.User) model.User {
-	SQL := "insert into tb_user(full_name, email, password, id_role, created_at, updated_at) values(?, ?, ?, ?)"
-	result, err := tx.ExecContext(ctx, SQL, user.FullName, user.Password, user.RoleId, time.Now(), time.Now())
+	SQL := "insert into tb_user(full_name, email, password, id_role, created_at, updated_at) values(?, ?, ?, ?, ?, ?)"
+	result, err := tx.ExecContext(ctx, SQL, user.FullName, user.Email, user.Password, user.RoleId, time.Now(), time.Now())
 	helper.PanicIfError(err)
 
 	id, err := result.LastInsertId()
@@ -44,7 +44,7 @@ func (repository *UserRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, us
 }
 
 func (repository *UserRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, userId int) (model.User, error) {
-	SQL := "select id_user, full_name, email from tb_user where id = ?"
+	SQL := "select id_user, full_name, email from tb_user where id_user = ?"
 	rows, err := tx.QueryContext(ctx, SQL, userId)
 	helper.PanicIfError(err)
 	defer rows.Close()

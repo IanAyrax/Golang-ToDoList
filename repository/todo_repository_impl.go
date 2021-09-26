@@ -45,7 +45,7 @@ func (repository *ToDoRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx, to
 }
 
 func (repository *ToDoRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, todoId int) (model.ToDo, error) {
-	SQL := "select id_todo, user_id, title from tb_todo where id = ?"
+	SQL := "select id_todo, user_id, title from tb_todo where id_todo = ?"
 	rows, err := tx.QueryContext(ctx, SQL, todoId)
 	helper.PanicIfError(err)
 	defer rows.Close()

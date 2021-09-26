@@ -45,7 +45,6 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.AuthLog
 	logged_user, err := service.AuthRepository.Login(ctx, tx, user)
 
 	if err == nil {
-		fmt.Println("Not Null")
 		var err error
 		//Creating Access Token
 		os.Setenv("ACCESS_SECRET", "jdnfksdmfksd")

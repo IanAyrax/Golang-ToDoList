@@ -20,7 +20,7 @@ func NewUserRouter(router *httprouter.Router, db *sql.DB, validate *validator.Va
 
 	router.GET("/api/user", userController.GetAll)
 	router.GET("/api/user/:userId", userController.FindById)
-	router.POST("/api/user", userController.Create)
+	router.POST("/api/register", userController.Create)
 	router.PUT("/api/user/:userId", userController.Update)
 	router.DELETE("/api/user/:userId", userController.Delete)
 

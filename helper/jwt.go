@@ -19,7 +19,7 @@ func ExtractToken(r *http.Request) string{
 	return ""
 }
 
-func VerifyToken(r *http.Request) (string, error){
+func VerifyToken(r *http.Request) (string, string, error){
 	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
@@ -30,20 +30,25 @@ func VerifyToken(r *http.Request) (string, error){
 	 })
 	 
 	 if err != nil {
-		return "", err
+		return "", "", err
 	 }
 
 	 role_id := ""
+	 user_id := ""
 	 //Verifying Role
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		if claims["role_id"] == "1"{
-			//r.Header.Set("Role", "user")
+		user_id = fmt.Sprintf("%v", claims["user_id"])
+		fmt.Print("Helper RoleId : ")
+		fmt.Println(claims["role_id"])
+		if fmt.Sprintf("%v", claims["role_id"]) == "1"{
+			//r.Header.Set("Role", "admin")
+			fmt.Println("Admin")
 			role_id = "1"
-		}else if claims["role_id"] == "2"{
+		}else if fmt.Sprintf("%v", claims["role_id"]) == "2"{
 			//r.Header.Set("Role", "user")
 			role_id = "2"
 		}
 	}
 	 
-	 return role_id, nil
+	 return user_id, role_id, nil
 }
