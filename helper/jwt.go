@@ -19,9 +19,9 @@ func ExtractToken(r *http.Request) string{
 	return ""
 }
 
-func VerifyToken(r *http.Request) error{
+func VerifyToken(r *http.Request) (string, error){
 	tokenString := ExtractToken(r)
-	_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		//Make sure that the token method conform to "SigningMethodHMAC"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
@@ -29,11 +29,21 @@ func VerifyToken(r *http.Request) error{
 		return []byte(os.Getenv("ACCESS_SECRET")), nil
 	 })
 	 
-	 fmt.Println(err)
-	 //fmt.Println(token)
 	 if err != nil {
-		return err
+		return "", err
 	 }
+
+	 role_id := ""
+	 //Verifying Role
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims["role_id"] == "1"{
+			//r.Header.Set("Role", "user")
+			role_id = "1"
+		}else if claims["role_id"] == "2"{
+			//r.Header.Set("Role", "user")
+			role_id = "2"
+		}
+	}
 	 
-	 return nil
+	 return role_id, nil
 }

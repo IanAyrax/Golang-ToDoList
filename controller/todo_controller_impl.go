@@ -25,12 +25,18 @@ func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request
 	toDoCreateRequest := model.ToDoCreateRequest{}
 	helper.ReadFromRequestBody(request, &toDoCreateRequest)
 	
-	err := helper.VerifyToken(request)
+	roleId, err := helper.VerifyToken(request)
+	request.Header.Set("RoleId", roleId)
 	if err != nil {
 		helper.PanicIfError(err)
 	}
 
-	fmt.Println(toDoCreateRequest.Title)
+	err = helper.IsAdmin(request)
+	if err != nil {
+		fmt.Println(err)
+		helper.PanicIfError(err)
+	}
+
 	toDoResponse := controller.ToDoService.Create(request.Context(), toDoCreateRequest)
 	webResponse := model.WebResponse{
 		Code:	200,

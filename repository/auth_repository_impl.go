@@ -30,18 +30,18 @@ func (authRepository *AuthRepositoryImpl)Register(ctx context.Context, tx *sql.T
 	return nil
 }
 
-func (authRepository *AuthRepositoryImpl)Login(ctx context.Context, tx *sql.Tx, user model.User) (int, error) {
-	SQL := "select id_user, email, password from tb_user where email = ? and password = ?"
+func (authRepository *AuthRepositoryImpl)Login(ctx context.Context, tx *sql.Tx, user model.User) ( model.User, error) {
+	SQL := "select id_user, email, password, id_role from tb_user where email = ? and password = ?"
 	rows, err := tx.QueryContext(ctx, SQL, user.Email, user.Password)
 	helper.PanicIfError(err)
 	defer rows.Close()
 	
 	logged_user := model.User{}
 	if rows.Next(){
-		err := rows.Scan(&logged_user.UserId, &logged_user.Email, &logged_user.Password)
+		err := rows.Scan(&logged_user.UserId, &logged_user.Email, &logged_user.Password, &logged_user.RoleId)
 		helper.PanicIfError(err)
-		return logged_user.UserId, nil
+		return logged_user, nil
 	}else{
-		return 0, errors.New("Email Not Found or the password is wrong !")
+		return model.User{}, errors.New("Email Not Found or the password is wrong !")
 	}
 }
