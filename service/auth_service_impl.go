@@ -7,9 +7,7 @@ import(
 	"example.com/GolangAPI2/model"
 	"example.com/GolangAPI2/repository"
 	"example.com/GolangAPI2/helper"
-	"github.com/dgrijalva/jwt-go"
-	"os"
-	"time"
+	"example.com/GolangAPI2/middleware"
 	//"example.com/GolangAPI2/exception"
 	"fmt"
 )
@@ -45,16 +43,7 @@ func (service *AuthServiceImpl) Login(ctx context.Context, request model.AuthLog
 	logged_user, err := service.AuthRepository.Login(ctx, tx, user)
 
 	if err == nil {
-		var err error
-		//Creating Access Token
-		os.Setenv("ACCESS_SECRET", "jdnfksdmfksd")
-		atClaims := jwt.MapClaims{}
-		atClaims["authorized"] = true
-		atClaims["user_id"] = logged_user.UserId
-		atClaims["role_id"] = logged_user.RoleId
-		atClaims["exp"] = time.Now().Add(time.Minute * 15).Unix()	
-		at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
-		token, err := at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
+		token, err := middleware.CreateToken(logged_user)
 
 		if err == nil {
 			return token

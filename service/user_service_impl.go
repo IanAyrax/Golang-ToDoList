@@ -9,6 +9,7 @@ import(
 	"example.com/GolangAPI2/helper"
 	"example.com/GolangAPI2/exception"
 	"fmt"
+	"errors"
 )
 
 type UserServiceImpl struct {
@@ -45,7 +46,11 @@ func (service *UserServiceImpl) Create(ctx context.Context, request model.UserCr
 	return helper.ToUserResponse(user)
 }
 
-func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUpdateRequest) model.UserResponse{
+func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUpdateRequest, roleId string, loggedId string) model.UserResponse{
+	if helper.IsAdmin(roleId) != nil && loggedId == fmt.Sprintf("%v", request.Id){
+		helper.PanicIfError(errors.New("Access Not Allowed !!!!"))
+	}
+
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -68,7 +73,11 @@ func (service *UserServiceImpl) Update(ctx context.Context, request model.UserUp
 	return helper.ToUserResponse(user)
 }
 
-func (service *UserServiceImpl) Delete(ctx context.Context, userId int) {
+func (service *UserServiceImpl) Delete(ctx context.Context, roleId string, loggedId string, userId int) {
+	if helper.IsAdmin(roleId) != nil && loggedId == fmt.Sprintf("%v", userId){
+		helper.PanicIfError(errors.New("Access Not Allowed !!!!"))
+	}
+
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -81,7 +90,11 @@ func (service *UserServiceImpl) Delete(ctx context.Context, userId int) {
 	service.UserRepository.Delete(ctx, tx, user)
 }
 
-func (service *UserServiceImpl) FindById(ctx context.Context, userId int) model.UserResponse {
+func (service *UserServiceImpl) FindById(ctx context.Context, roleId string, loggedId string, userId int) model.UserResponse {
+	if helper.IsAdmin(roleId) != nil && loggedId == fmt.Sprintf("%v", userId){
+		helper.PanicIfError(errors.New("Access Not Allowed !!!!"))
+	}
+
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -93,7 +106,10 @@ func (service *UserServiceImpl) FindById(ctx context.Context, userId int) model.
 	return helper.ToUserResponse(user)
 }
 
-func (service *UserServiceImpl) GetAll(ctx context.Context) []model.UserResponse {
+func (service *UserServiceImpl) GetAll(ctx context.Context, roleId string) []model.UserResponse {
+	err := helper.IsAdmin(roleId)
+	helper.PanicIfError(err)
+
 	fmt.Println("Service OK")
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)

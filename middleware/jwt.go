@@ -1,12 +1,29 @@
-package helper
+package middleware
 
 import (
 	"net/http"
 	"strings"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"example.com/GolangAPI2/model"
+	"time"
 	"os"
 )
+
+func CreateToken(logged_user model.User) (string, error){
+	var err error
+	//Creating Access Token
+	os.Setenv("ACCESS_SECRET", "jdnfksdmfksd")
+	atClaims := jwt.MapClaims{}
+	atClaims["authorized"] = true
+	atClaims["user_id"] = logged_user.UserId
+	atClaims["role_id"] = logged_user.RoleId
+	atClaims["exp"] = time.Now().Add(time.Minute * 15).Unix()	
+	at := jwt.NewWithClaims(jwt.SigningMethodHS256, atClaims)
+	token, err := at.SignedString([]byte(os.Getenv("ACCESS_SECRET")))
+
+	return token, err
+}
 
 func ExtractToken(r *http.Request) string{
 	bearToken := r.Header.Get("Authorization")

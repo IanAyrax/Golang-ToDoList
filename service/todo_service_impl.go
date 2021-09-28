@@ -9,6 +9,7 @@ import(
 	"example.com/GolangAPI2/helper"
 	"example.com/GolangAPI2/exception"
 	"fmt"
+	"errors"
 )
 
 type ToDoServiceImpl struct {
@@ -25,9 +26,7 @@ func NewToDoService(todoRepository repository.ToDoRepository, DB *sql.DB, valida
 	}
 }
 
-func (service *ToDoServiceImpl) Create(ctx context.Context, request model.ToDoCreateRequest) model.ToDoResponse {
-	fmt.Println("ToDoService Ok!")
-	fmt.Println(request.UserId)
+func (service *ToDoServiceImpl) Create(ctx context.Context, request model.ToDoCreateRequest) (model.ToDoResponse) {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -45,7 +44,11 @@ func (service *ToDoServiceImpl) Create(ctx context.Context, request model.ToDoCr
 	return helper.ToToDoResponse(todo)
 }
 
-func (service *ToDoServiceImpl) Update(ctx context.Context, request model.ToDoUpdateRequest) model.ToDoResponse{
+func (service *ToDoServiceImpl) Update(ctx context.Context, get model.ToDoResponse, request model.ToDoUpdateRequest, roleId string, userId string) model.ToDoResponse{
+	if fmt.Sprintf("%v", get.UserId) != userId && helper.IsAdmin(roleId) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+	
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -66,7 +69,11 @@ func (service *ToDoServiceImpl) Update(ctx context.Context, request model.ToDoUp
 	return helper.ToToDoResponse(todo)
 }
 
-func (service *ToDoServiceImpl) Delete(ctx context.Context, todoId int) {
+func (service *ToDoServiceImpl) Delete(ctx context.Context, get model.ToDoResponse, roleId string, userId string, todoId int) {
+	if fmt.Sprintf("%v", get.UserId) != userId && helper.IsAdmin(roleId) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -79,7 +86,7 @@ func (service *ToDoServiceImpl) Delete(ctx context.Context, todoId int) {
 	service.ToDoRepository.Delete(ctx, tx, todo)
 }
 
-func (service *ToDoServiceImpl) FindById(ctx context.Context, todoId int) model.ToDoResponse {
+func (service *ToDoServiceImpl) FindById(ctx context.Context, userId string, roleId string, todoId int) model.ToDoResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -88,10 +95,20 @@ func (service *ToDoServiceImpl) FindById(ctx context.Context, todoId int) model.
 	if err != nil {
 		panic(exception.NewNotFoundError(err.Error()))
 	}
-	return helper.ToToDoResponse(todo)
+	
+	toDoResponse := helper.ToToDoResponse(todo)
+	if fmt.Sprintf("%v", toDoResponse.UserId) != userId && helper.IsAdmin(roleId) != nil{
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+
+	return toDoResponse
 }
 
-func (service *ToDoServiceImpl) GetAll(ctx context.Context) []model.ToDoResponse {
+func (service *ToDoServiceImpl) GetAll(ctx context.Context, roleId string) []model.ToDoResponse {
+	if helper.IsAdmin(roleId) != nil {
+		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	}
+
 	fmt.Println("Service OK")
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)

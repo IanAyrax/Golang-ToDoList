@@ -5,10 +5,10 @@ import (
 	"example.com/GolangAPI2/service"
 	"example.com/GolangAPI2/model"
 	"example.com/GolangAPI2/helper"
+	"example.com/GolangAPI2/middleware"
 	"net/http"
 	"strconv"
 	"fmt"
-	"errors"
 )
 
 type ToDoControllerImpl struct {
@@ -26,12 +26,11 @@ func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request
 	toDoCreateRequest := model.ToDoCreateRequest{}
 	helper.ReadFromRequestBody(request, &toDoCreateRequest)
 	
-	_, roleId, err := helper.VerifyToken(request)
-	request.Header.Set("RoleId", roleId)
-	if err != nil {
-		helper.PanicIfError(err)
-	}
+	userId, _, err := middleware.VerifyToken(request)
+	helper.PanicIfError(err)
 	
+	i, _ := strconv.Atoi(userId) 
+	toDoCreateRequest.UserId = i
 	toDoResponse := controller.ToDoService.Create(request.Context(), toDoCreateRequest)
 	webResponse := model.WebResponse{
 		Code:	200,
@@ -44,30 +43,26 @@ func (controller *ToDoControllerImpl) Create(writer http.ResponseWriter, request
 func (controller *ToDoControllerImpl) Update(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	toDoUpdateRequest := model.ToDoUpdateRequest{}
 	helper.ReadFromRequestBody(request, &toDoUpdateRequest)
-	userId, roleId, err := helper.VerifyToken(request)
+	userId, roleId, err := middleware.VerifyToken(request)
 	request.Header.Set("RoleId", roleId)
-	if err != nil {
-		helper.PanicIfError(err)
-	}
+	helper.PanicIfError(err)
+	
 
-	err = helper.IsAdmin(request)
-	if err != nil {
-		fmt.Println(err)
-		helper.PanicIfError(err)
-	}
+	//err = helper.IsAdmin(request)
+	//helper.PanicIfError(err)
 	
 	todoId := params.ByName("todoId")
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
 	
-	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
-	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
-		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
-	}
+	toDoResponse := controller.ToDoService.FindById(request.Context(),roleId, userId, id)
+	//if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
+	//	helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	//}
 	
 	toDoUpdateRequest.Id = id
 
-	toDoResponse = controller.ToDoService.Update(request.Context(), toDoUpdateRequest)
+	toDoResponse = controller.ToDoService.Update(request.Context(), toDoResponse, toDoUpdateRequest, roleId, userId)
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
@@ -78,22 +73,21 @@ func (controller *ToDoControllerImpl) Update(writer http.ResponseWriter, request
 }
 
 func (controller *ToDoControllerImpl) Delete(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	userId, roleId, err := helper.VerifyToken(request)
+	userId, roleId, err := middleware.VerifyToken(request)
 	request.Header.Set("RoleId", roleId)
-	if err != nil {
-		helper.PanicIfError(err)
-	}
+	helper.PanicIfError(err)
+	
 
 	todoId := params.ByName("todoId")
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
 
-	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
-	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
-		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
-	}
+	toDoResponse := controller.ToDoService.FindById(request.Context(), roleId, userId, id)
+	//if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
+	//	helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	//}
 
-	controller.ToDoService.Delete(request.Context(), id)
+	controller.ToDoService.Delete(request.Context(), toDoResponse, roleId, userId, id)
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
@@ -103,7 +97,7 @@ func (controller *ToDoControllerImpl) Delete(writer http.ResponseWriter, request
 }
 
 func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	userId, roleId, err := helper.VerifyToken(request)
+	userId, roleId, err := middleware.VerifyToken(request)
 	request.Header.Set("RoleId", roleId)
 	if err != nil {
 		helper.PanicIfError(err)
@@ -113,10 +107,10 @@ func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, reque
 	id, err := strconv.Atoi(todoId)
 	helper.PanicIfError(err)
 
-	toDoResponse := controller.ToDoService.FindById(request.Context(), id)
-	if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(request) != nil{
-		helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
-	}
+	toDoResponse := controller.ToDoService.FindById(request.Context(), roleId, userId, id)
+	// if fmt.Sprintf("%v", toDoResponse.UserId) != userId || helper.IsAdmin(roleId) != nil{
+	// 	helper.PanicIfError(errors.New("Action Not Allowed : Not the Owner!!!!"))
+	// }
 
 	webResponse := model.WebResponse{
 		Code:	200,
@@ -129,19 +123,14 @@ func (controller *ToDoControllerImpl) FindById(writer http.ResponseWriter, reque
 
 func (controller *ToDoControllerImpl) GetAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	fmt.Println("GetAll Controller OK")
-	_, roleId, err := helper.VerifyToken(request)
+	_, roleId, err := middleware.VerifyToken(request)
 	request.Header.Set("RoleId", roleId)
-	if err != nil {
-		helper.PanicIfError(err)
-	}
-
-	err = helper.IsAdmin(request)
-	if err != nil {
-		fmt.Println(err)
-		helper.PanicIfError(err)
-	}
+	helper.PanicIfError(err)
 	
-	toDoResponses := controller.ToDoService.GetAll(request.Context())
+	// err = helper.IsAdmin(roleId)
+	// helper.PanicIfError(err)
+	
+	toDoResponses := controller.ToDoService.GetAll(request.Context(), roleId)
 	webResponse := model.WebResponse{
 		Code:	200,
 		Status:	"OK",
